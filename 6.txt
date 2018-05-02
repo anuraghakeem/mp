@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include "NUC1xx.h"
+#include "DrvSYS.h"
+#include "DrvGPIO.h"
+#include "NUC1xx-LB_002\LCD_Driver.h"
+#include "ScanKey.h"
+#include "Seven_Segment.h"
+void seg_display(void)
+{
+close_seven_segment();
+show_seven_segment(0,7);
+show_seven_segment(1,7);
+DrvSYS_Delay(5000);
+}
+
+
+void GPIOAB_INT_Callback(uint32_t GPA_IntStatus, uint32_t GPB_IntStatus)
+{
+if((GPA_IntStatus>>15) & 0x01)
+print_lcd(0,"interrupt A!! ");
+
+
+if((GPB_IntStatus>>15) & 0x01)
+seg_display();
+}
+
+
+void GPIOCDE_INT_Callback(uint32_t GPC_IntStatus, uint32_t GPD_IntStatus, uint32_t GPE_IntStatus)
+{
+
+}
+
+
+
+
+int32_t main()
+{
+
+UNLOCKREG();
+SYSCLK->PWRCON.XTL12M_EN=1;
+DrvSYS_Delay(5000);
+SYSCLK->CLKSEL0.HCLK_S=0;
+LOCKREG();
+
+DrvGPIO_Open(E_GPA,15,E_IO_INPUT);
+DrvGPIO_Open(E_GPA,15,E_IO_INPUT);
+DrvGPIO_EnableInt(E_GPA,15,E_IO_RISING,E_MODE_EDGE);
+DrvGPIO_EnableInt(E_GPB,15,E_IO_RISING,E_MODE_EDGE);
+DrvGPIO_SetDebounceTime(5,1);
+DrvGPIO_EnableDebounce(E_GPA,15);
+DrvGPIO_EnableDebounce(E_GPB,15);
+
+DrvGPIO_SetIntCallback(GPIOAB_INT_Callback,GPIOCDE_INT_Callback);
+
+Initial_panel();
+clr_all_panel();
+while(1)
+{
+}
+}
